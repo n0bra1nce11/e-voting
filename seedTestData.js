@@ -12,32 +12,29 @@ const pool = new Pool({
     port: 5432
 });
 
-// --- Test Data Definitions (from previous step) ---
+// --- Test Data Definitions ---
 
-const testUsersData = [
-  {
-    voter_id: "TEST_VOTER_001",
-    name: "Test User One",
-    email: "testuser1@example.com",
-    password: "Password1!",
-    certificate_status: "approved",
-    has_voted: false,
-    is_admin: false,
-    citizenship_image_path: "uploads/citizenship_images/test_user1.jpg",
-    citizenship_image_status: "approved"
-  },
-  {
-    voter_id: "TEST_VOTER_002",
-    name: "Test User Two",
-    email: "testuser2@example.com",
-    password: "Password2@",
-    certificate_status: "pending",
-    has_voted: false,
-    is_admin: false,
-    citizenship_image_path: "uploads/citizenship_images/test_user2.jpg",
-    citizenship_image_status: "pending"
-  },
-  {
+const NUM_TEST_VOTERS = 500;
+const testUsersData = [];
+const defaultPassword = "Password123!"; // Common password for all test users
+
+for (let i = 1; i <= NUM_TEST_VOTERS; i++) {
+    const paddedId = String(i).padStart(3, '0');
+    testUsersData.push({
+        voter_id: `TEST_VOTER_${paddedId}`,
+        name: `Test User ${paddedId}`,
+        email: `testuser${paddedId}@example.com`,
+        password: defaultPassword,
+        certificate_status: "approved", // To allow voting
+        has_voted: false,
+        is_admin: false,
+        citizenship_image_path: `uploads/citizenship_images/test_user_${paddedId}.jpg`, // Placeholder
+        citizenship_image_status: "approved" // To align with certificate status
+    });
+}
+
+// Add a specific admin user if needed, separate from bulk voters
+testUsersData.push({
     voter_id: "TEST_ADMIN_001",
     name: "Test Admin User",
     email: "testadmin1@example.com",
@@ -46,18 +43,26 @@ const testUsersData = [
     has_voted: false,
     is_admin: true,
     citizenship_image_path: null,
-    citizenship_image_status: "n/a"
-  }
-];
+    citizenship_image_status: "n/a" // Not applicable for admins
+});
 
-const testVotesData = [
-  {
-    // vote_id will be generated
-    voter_id: "TEST_VOTER_001",
-    candidateToVoteFor: "Candidate A", // Actual data to be encrypted
-    timestamp: new Date(Date.now() - 120000) // 2 minutes ago
-  }
-];
+
+// testVotesData will be generated based on testUsersData.
+const testVotesData = [];
+const candidates = ["Candidate Alpha", "Candidate Bravo", "Candidate Charlie", "Candidate Delta"];
+
+// Generate votes for all non-admin test users
+for (let i = 0; i < NUM_TEST_VOTERS; i++) { // Only loop through the 500 generated voters
+    const user = testUsersData[i];
+    if (!user.is_admin) {
+        testVotesData.push({
+            voter_id: user.voter_id,
+            candidateToVoteFor: candidates[i % candidates.length], // Distribute votes among candidates
+            timestamp: new Date(Date.now() - (NUM_TEST_VOTERS - i) * 1000) // Stagger timestamps slightly
+        });
+    }
+}
+
 
 // --- Seeding Functions ---
 
