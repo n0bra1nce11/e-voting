@@ -114,60 +114,6 @@ async function seedUsers() {
     console.log('User seeding complete.');
 }
 
-// Helper for actual AES-GCM encryption
-async function mockEncryptVote(votePayload) { // votePayload is expected to be like { candidate: "Candidate Name" }
-    try {
-        // 1. Generate an AES-GCM key
-        const aesKeyObject = await crypto.webcrypto.subtle.generateKey(
-            {
-                name: "AES-GCM",
-                length: 256, // Key length: 128, 192, or 256 bits
-            },
-            true, // exportable
-            ["encrypt", "decrypt"] // key usages
-        );
-
-        // 2. Export the raw key and convert to base64 for storage
-        const rawKey = await crypto.webcrypto.subtle.exportKey("raw", aesKeyObject);
-        const aesKeyBase64 = Buffer.from(rawKey).toString('base64');
-
-        // 3. Generate an IV (Initialization Vector)
-        const iv = crypto.randomBytes(12); // Recommended size for AES-GCM is 12 bytes (96 bits)
-        const ivBase64 = Buffer.from(iv).toString('base64');
-
-        // 4. Prepare the data to be encrypted (must be ArrayBuffer or TypedArray)
-        const plaintextEncoder = new TextEncoder();
-        const plaintextBuffer = plaintextEncoder.encode(JSON.stringify(votePayload));
-
-        // 5. Encrypt the data
-        const ciphertextBuffer = await crypto.webcrypto.subtle.encrypt(
-            {
-                name: "AES-GCM",
-                iv: iv // Pass the raw IV buffer here
-            },
-            aesKeyObject, // The CryptoKey object
-            plaintextBuffer
-        );
-
-        const encryptedVoteBase64 = Buffer.from(ciphertextBuffer).toString('base64');
-
-        return {
-            encryptedVote: encryptedVoteBase64,
-            aesKey: aesKeyBase64,
-            iv: ivBase64
-        };
-    } catch (error) {
-        console.error("Error during mock encryption:", error);
-        // Fallback to non-encrypted placeholders if actual encryption fails in seed,
-        // though this would likely still cause decryption errors later if not addressed.
-        // For robustness, the seed script should ideally not have complex crypto that can fail easily.
-        // However, to match server decryption, we must attempt real encryption.
-        return {
-            encryptedVote: Buffer.from(JSON.stringify(votePayload)).toString('base64'), // Fallback placeholder
-            aesKey: crypto.randomBytes(32).toString('base64'), // Fallback placeholder
-            iv: crypto.randomBytes(12).toString('base64') // Fallback placeholder
-        };
-    }
 }
 
 
@@ -194,7 +140,7 @@ async function seedVotesAndLedger() {
 
         // const publicKeyPem = voter.rows[0].public_key;
         // For test data, we'll just create mock encrypted data as the client usually does this.
-        const { encryptedVote, aesKey, iv } = await mockEncryptVote({ candidate: voteData.candidateToVoteFor } /*, publicKeyPem */);
+
         const timestamp = voteData.timestamp;
 
         try {
