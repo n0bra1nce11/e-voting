@@ -4,7 +4,8 @@
   "description": "Secure E-Voting System with PKI",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "seed:test": "node seedTestData.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
