@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voting - Secure E-Voting System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            display: flex; /* Added for centering */
+            align-items: center; /* Added for centering */
+            justify-content: center; /* Added for centering */
+        }
+
+        .container {
+            max-width: 800px; /* Adjusted for a single panel view */
+            margin: 0 auto;
+            padding: 20px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Copied relevant panel styles */
+        .panel h2 {
+            margin-bottom: 20px;
+            text-align: center; /* Center heading */
+        }
+        .panel h3 {
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+        .panel h3:first-of-type {
+            margin-top: 0;
+        }
+        .panel p {
+            margin-bottom: 20px;
+        }
+        .panel .btn {
+            margin-bottom: 15px;
+        }
+        .panel .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .status-box {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .vote-receipt {
+            background: #f0f8e7;
+            border: 1px solid #c7e3b0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .ballot-option {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .ballot-option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .ballot-option.selected {
+            border-color: #667eea;
+            background: #e7f3ff;
+        }
+
+        .ballot-option input[type="radio"] {
+            margin-right: 15px;
+            transform: scale(1.2);
+        }
+        /* Add a class for the voting panel itself for any specific styling if needed */
+        .voting-panel-standalone {
+             /* Example: padding: 20px; */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Voting Panel Content -->
+        <div id="voting" class="panel active voting-panel-standalone"> <!-- Added active class to make it visible by default and a new class for standalone styling -->
+            <h2>🗳️ Cast Your Vote</h2>
+
+            <div id="authSection">
+                <h3>Authentication Required</h3>
+                <div class="form-group">
+                    <label for="voterEmailAuth">Email:</label>
+                    <input type="email" id="voterEmailAuth" placeholder="Your registered email">
+                </div>
+                <div class="form-group">
+                    <label for="voterPasswordAuth">Password:</label>
+                    <input type="password" id="voterPasswordAuth" placeholder="Your password">
+                </div>
+                <div class="form-group">
+                    <label for="privateKeyAuth">Private Key (for signing):</label>
+                    <input type="file" id="privateKeyFile" accept=".key,.txt,.pem" onchange="loadPrivateKeyFromFile()" style="margin-bottom: 10px;">
+                    <small style="display: block; margin-bottom: 10px; color: #666;">Or paste your private key below:</small>
+                    <textarea id="privateKeyAuth" rows="3" placeholder="Paste your private key here"></textarea>
+                </div>
+                <button class="btn" onclick="authenticateVoter()">Authenticate</button>
+                <div id="authStatus"></div>
+            </div>
+
+            <div id="ballotSection" style="display: none;">
+                <h3>2025 Presidential Election Ballot</h3>
+                <p><strong>Instructions:</strong> Select one candidate. Your vote will be encrypted and anonymized.</p>
+
+                <div id="ballotOptions">
+                    <div class="ballot-option" role="radio" aria-checked="false" tabindex="0" onclick="selectCandidate('candidate1')">
+                        <input type="radio" name="vote" value="candidate1" id="vote1" aria-labelledby="candidate1-label">
+                        <div id="candidate1-label">
+                            <strong>Prachanda</strong><br>
+                            <small>Communist Party of Nepal</small>
+                        </div>
+                    </div>
+
+                    <div class="ballot-option" role="radio" aria-checked="false" tabindex="0" onclick="selectCandidate('candidate2')">
+                        <input type="radio" name="vote" value="candidate2" id="vote2" aria-labelledby="candidate2-label">
+                        <div id="candidate2-label">
+                            <strong>Sher Bahadaur Deuba</strong><br>
+                            <small>Nepal Congress</small>
+                        </div>
+                    </div>
+
+                    <div class="ballot-option" role="radio" aria-checked="false" tabindex="0" onclick="selectCandidate('candidate3')">
+                        <input type="radio" name="vote" value="candidate3" id="vote3" aria-labelledby="candidate3-label">
+                        <div id="candidate3-label">
+                            <strong>Rabi Lamichhane</strong><br>
+                            <small>Rastriya Swatantra Party</small>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-success" onclick="castVote()">Cast Vote</button>
+                <button class="btn btn-secondary" onclick="clearVote()">Clear Selection</button>
+
+                <div id="voteStatus"></div>
+                <div id="voteReceipt"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentUser = null;
+        let privateKey = null; // This was already in the main script, ensure it's managed correctly if also kept there.
+
+        // Utility to convert array buffer to base64
+        function arrayBufferToBase64(buffer) {
+            let binary = '';
+            const bytes = new Uint8Array(buffer);
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary);
+        }
+
+        // Utility to convert base64 to array buffer
+        function base64ToArrayBuffer(base64) {
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        // Load private key from file
+        function loadPrivateKeyFromFile() {
+            const fileInput = document.getElementById('privateKeyFile');
+            const file = fileInput.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('privateKeyAuth').value = e.target.result;
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // Authenticate voter
+        async function authenticateVoter() {
+            const email = document.getElementById('voterEmailAuth').value;
+            const password = document.getElementById('voterPasswordAuth').value;
+            const privateKeyB64 = document.getElementById('privateKeyAuth').value;
+
+            if (!email || !password || !privateKeyB64) {
+                showStatus('authStatus', 'Please enter email, password, and private key.', 'error');
+                return;
+            }
+
+            try {
+                // Login with email/password
+                const loginResponse = await fetch('/api/login', { // Assuming API paths are relative to root
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                if (!loginResponse.ok) throw new Error(await loginResponse.text());
+                const { token, voterID } = await loginResponse.json();
+
+                // Import private key for signing
+                const privateKeyObj = await crypto.subtle.importKey(
+                    "pkcs8",
+                    base64ToArrayBuffer(privateKeyB64),
+                    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+                    false,
+                    ["sign"]
+                );
+
+                // Get challenge
+                const challengeResponse = await fetch(`/api/auth-challenge/${voterID}`);
+                if (!challengeResponse.ok) throw new Error(await challengeResponse.text());
+                const { challenge } = await challengeResponse.json();
+
+                // Sign the challenge
+                const signature = await crypto.subtle.sign(
+                    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+                    privateKeyObj,
+                    new TextEncoder().encode(challenge)
+                );
+                const signatureB64 = arrayBufferToBase64(signature);
+
+                // Verify signature
+                const authResponse = await fetch('/api/authenticate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ voterID, signature: signatureB64 })
+                });
+                if (!authResponse.ok) throw new Error(await authResponse.text());
+
+                currentUser = { email, voterID, token };
+                privateKey = privateKeyB64; // Storing the key for casting vote
+                document.getElementById('authSection').style.display = 'none';
+                document.getElementById('ballotSection').style.display = 'block';
+                showStatus('authStatus', 'Authentication successful.', 'success');
+            } catch (error) {
+                console.error('Authentication error:', error);
+                showStatus('authStatus', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Select candidate
+        function selectCandidate(candidateId) {
+            document.querySelectorAll('.ballot-option').forEach(option => {
+                option.classList.remove('selected');
+                option.setAttribute('aria-checked', 'false');
+            });
+
+            const input = document.getElementById(`vote${candidateId.slice(-1)}`);
+            input.checked = true;
+            input.parentElement.classList.add('selected');
+            input.parentElement.setAttribute('aria-checked', 'true');
+        }
+
+         // Cast vote
+         async function castVote() {
+            if (!currentUser) {
+                showStatus('voteStatus', 'Please authenticate first.', 'error');
+                return;
+            }
+
+            const selectedVote = document.querySelector('input[name="vote"]:checked');
+            if (!selectedVote) {
+                showStatus('voteStatus', 'Please select a candidate.', 'error');
+                return;
+            }
+
+            try {
+                const voteData = {
+                    candidate: selectedVote.value,
+                    timestamp: new Date().toISOString(),
+                    voterIDHash: await hashData(currentUser.voterID) // Added hashData call
+                };
+
+                const aesKey = await crypto.subtle.generateKey(
+                    { name: "AES-GCM", length: 256 },
+                    true,
+                    ["encrypt", "decrypt"]
+                );
+                const iv = crypto.getRandomValues(new Uint8Array(12));
+                const encryptedVote = await crypto.subtle.encrypt(
+                    { name: "AES-GCM", iv: iv },
+                    aesKey,
+                    new TextEncoder().encode(JSON.stringify(voteData))
+                );
+                const encryptedVoteB64 = arrayBufferToBase64(encryptedVote);
+                const exportedAesKey = await crypto.subtle.exportKey("raw", aesKey);
+                const aesKeyB64 = arrayBufferToBase64(exportedAesKey);
+                const ivB64 = arrayBufferToBase64(iv);
+
+                const response = await fetch('/api/cast-vote', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentUser.token}`
+                    },
+                    body: JSON.stringify({
+                        encryptedVote: encryptedVoteB64,
+                        aesKey: aesKeyB64,
+                        iv: ivB64
+                    })
+                });
+
+                const contentType = response.headers.get('content-type');
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    throw new Error(errorData);
+                }
+                if (!contentType || !contentType.includes('application/json')) {
+                    const errorText = await response.text();
+                    throw new Error(`Unexpected response: ${errorText}`);
+                }
+                const { receipt } = await response.json();
+
+                showVoteReceipt(receipt);
+                showStatus('voteStatus', 'Vote cast successfully!', 'success');
+                setTimeout(() => {
+                    document.getElementById('ballotSection').style.display = 'none';
+                    document.getElementById('authSection').style.display = 'block';
+                    clearAuthForm();
+                }, 3000);
+            } catch (error) {
+                console.error('Vote casting error:', error);
+                showStatus('voteStatus', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Hash data utility function (needed for castVote)
+        async function hashData(data) {
+            const msgBuffer = new TextEncoder().encode(data);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            return arrayBufferToBase64(hashBuffer);
+        }
+
+        // Clear vote
+        function clearVote() {
+            document.querySelectorAll('input[name="vote"]').forEach(input => {
+                input.checked = false;
+            });
+            document.querySelectorAll('.ballot-option').forEach(option => {
+                option.classList.remove('selected');
+                option.setAttribute('aria-checked', 'false');
+            });
+        }
+
+        // Clear auth form
+        function clearAuthForm() {
+            document.getElementById('voterEmailAuth').value = '';
+            document.getElementById('voterPasswordAuth').value = '';
+            document.getElementById('privateKeyAuth').value = '';
+            // No need to clear currentUser and privateKey here if this page is only for voting
+            // and re-authentication is required on each visit/reload.
+            // Or, if session persistence is desired for this page, this logic might need adjustment.
+        }
+
+        // Show vote receipt
+        function showVoteReceipt(receipt) {
+            const receiptHTML = `
+                <div class="vote-receipt">
+                    <h4>🧾 Vote Receipt</h4>
+                    <p><strong>Receipt ID:</strong> ${receipt.receiptID}</p>
+                    <p><strong>Timestamp:</strong> ${new Date(receipt.timestamp).toLocaleString()}</p>
+                    <p><strong>Block Hash:</strong> ${receipt.blockHash}</p>
+                    <p><small>Save this receipt ID to verify your vote later.</small></p>
+                </div>
+            `;
+            document.getElementById('voteReceipt').innerHTML = receiptHTML;
+        }
+
+        // Show status
+        function showStatus(elementId, message, type) {
+            const statusClass = `status-${type}`; // Corrected template literal
+            const statusHTML = `<div class="status-box ${statusClass}">${message}</div>`; // Added status-box for consistent styling
+            document.getElementById(elementId).innerHTML = statusHTML;
+        }
+
+        // Initialize (if needed for this standalone page)
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Voting page initialized');
+            // Any specific initializations for the voting page can go here.
+            // For instance, making the auth section visible by default.
+            document.getElementById('authSection').style.display = 'block';
+            document.getElementById('ballotSection').style.display = 'none';
+        });
+    </script>
+</body>
+</html>
