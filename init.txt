@@ -1,0 +1,41 @@
+CREATE DATABASE evoting;
+
+\c evoting
+
+CREATE TABLE voters (
+    voter_id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    public_key TEXT NOT NULL,
+    certificate_status VARCHAR(20) NOT NULL,
+    certificate TEXT,
+    has_voted BOOLEAN DEFAULT FALSE,
+    challenge TEXT,
+    is_admin BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE certificate_requests (
+    voter_id VARCHAR(50) PRIMARY KEY REFERENCES voters(voter_id),
+    request_date TIMESTAMP NOT NULL,
+    status VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE votes (
+    vote_id VARCHAR(50) PRIMARY KEY,
+    voter_id VARCHAR(50) REFERENCES voters(voter_id),
+    encrypted_vote TEXT NOT NULL,
+    timestamp TIMESTAMP NOT NULL,
+    aes_key TEXT,
+    iv TEXT
+);
+
+CREATE TABLE ledger (
+    block_id SERIAL PRIMARY KEY,
+    vote_id VARCHAR(50),
+    type VARCHAR(20),
+    data JSONB,
+    hash TEXT NOT NULL,
+    previous_hash TEXT NOT NULL,
+    timestamp TIMESTAMP NOT NULL
+);

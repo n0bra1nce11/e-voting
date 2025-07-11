@@ -1,0 +1,20 @@
+[
+  {
+    "block_id": 1,
+    "vote_id": "VOTE_1750243624043_6cc8b3d3dd2c058b",
+    "type": null,
+    "data": null,
+    "hash": "rvqdMC7G5CgCCsmr2nOgXJZY4RO12CMI8q9JVOt8m4k=",
+    "previous_hash": "0",
+    "timestamp": "2025-06-18T10:47:04.044Z"
+  },
+  {
+    "block_id": 2,
+    "vote_id": "VOTE_1750243728517_39dd3d58bfc9bcaf",
+    "type": null,
+    "data": null,
+    "hash": "EfxChDFm4X2IAlGIBCzl+SRhCF5bkM9OqS/20r81bCA=",
+    "previous_hash": "rvqdMC7G5CgCCsmr2nOgXJZY4RO12CMI8q9JVOt8m4k=",
+    "timestamp": "2025-06-18T10:48:48.517Z"
+  }
+]
