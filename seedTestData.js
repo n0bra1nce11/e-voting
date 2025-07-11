@@ -114,16 +114,6 @@ async function seedUsers() {
     console.log('User seeding complete.');
 }
 
-// Helper for mock encryption (actual encryption is done client-side in the app)
-function mockEncryptVote(voteData, publicKeyPem) {
-    // For seeding, we don't need real client-side encryption.
-    // We'll create placeholders for aes_key, iv, and encrypted_vote.
-    // The important part for the 'votes' table is that these fields exist.
-    // The actual encrypted content would be JSON like `{"candidate": "Candidate A"}`
-    const aesKey = crypto.randomBytes(32).toString('base64'); // Mock AES key
-    const iv = crypto.randomBytes(16).toString('base64'); // Mock IV
-    const encryptedVote = Buffer.from(JSON.stringify(voteData)).toString('base64'); // Simple base64 encoding for placeholder
-    return { encryptedVote, aesKey, iv };
 }
 
 
@@ -150,7 +140,7 @@ async function seedVotesAndLedger() {
 
         // const publicKeyPem = voter.rows[0].public_key;
         // For test data, we'll just create mock encrypted data as the client usually does this.
-        const { encryptedVote, aesKey, iv } = mockEncryptVote({ candidate: voteData.candidateToVoteFor } /*, publicKeyPem */);
+
         const timestamp = voteData.timestamp;
 
         try {
